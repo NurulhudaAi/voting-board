@@ -566,7 +566,7 @@ function deadlinePassed(){ return !!(S && S.settings.closeAt && now()>=S.setting
 function myName(){ var m=(S||HOME||{}).me; return m && m.named ? m.display : ''; }
 function needName(then){ if (myName()) { then(); return; } openNameModal(then, true); }
 function openNameModal(then, first){
-  var inp=h('input',{type:'text',class:'big',maxlength:40,placeholder:'Your name, e.g. Huda (Group 3)',value:myName()});
+  var inp=h('input',{type:'text',class:'big',maxlength:40,placeholder:'Your name, e.g. Ronaldo',value:myName()});
   var go=h('button',{class:'btn primary',type:'submit'},first?'Continue':'Save');
   openModal(h('form',{onsubmit:function(e){ e.preventDefault(); var v=inp.value.trim().replace(/\s+/g,' ');
       if (v.length<2){ toast('Please enter at least 2 characters'); inp.focus(); return; }
