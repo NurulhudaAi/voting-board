@@ -399,7 +399,7 @@ function act(fn){
     .catch(function(e){ if (e && e.message !== 'busy') toast((e && e.message) || 'Something went wrong. Please try again.'); throw e; })
     .finally(function(){ busy = false; renderBoard(); });
 }
-function setState(st){ if (!st) return; S = st; clockSkew = st.serverTime - Date.now(); document.title = st.board.name + ' · Group Video Showcase'; renderBoard(); }
+function setState(st){ if (!st) return; S = st; clockSkew = st.serverTime - Date.now(); document.title = st.board.name + ' · Group Video Voting'; renderBoard(); }
 function poll(){ if (document.hidden || busy || pending || !BOARD) return; call('getState', BOARD).then(setState).catch(function(e){ if (!S) fatal(e); }); }
 
 /* ---------- helpers ---------- */
