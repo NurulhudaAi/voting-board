@@ -493,6 +493,10 @@ function videoInfo(raw){
         embed:'https://www.youtube.com/embed/'+id+'?autoplay=1&rel=0&playsinline=1'+(t?'&start='+t:''), thumb:'https://i.ytimg.com/vi/'+id+'/hqdefault.jpg' };
     }
   }
+  if (host==='docs.google.com' && (m=u.pathname.match(/\/presentation\/d\/([\w-]{10,})/)))
+    return { kind:'slides', label:'Google Slides', href:raw, embed:'https://docs.google.com/presentation/d/'+m[1]+'/embed?start=false&loop=false', thumb:'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w800' };
+  if (/(^|\.)canva\.com$/.test(host) && (m=u.pathname.match(/\/design\/([\w-]+)(?:\/([\w-]+))?/)))
+    return { kind:'canva', label:'Canva', href:raw, embed:'https://www.canva.com/design/'+m[1]+(m[2]&&m[2]!=='view'&&m[2]!=='edit'?'/'+m[2]:'')+'/view?embed' };
   if (host==='drive.google.com' || host==='docs.google.com'){
     var did = (m=u.pathname.match(/\/d\/([\w-]{10,})/)) ? m[1] : u.searchParams.get('id');
     if (did) return { kind:'drive', label:'Google Drive', href:raw, embed:'https://drive.google.com/file/d/'+did+'/preview', thumb:'https://drive.google.com/thumbnail?id='+did+'&sz=w800' };
@@ -707,7 +711,7 @@ function renderPosts(force){
     else if (c.sig!==sig && !playing[g.id]){ var n=buildCard(g); n.style.animation='none'; c.el.replaceWith(n); c.el=n; c.sig=sig; }
     c.el.classList.toggle('picked', S.picks.indexOf(g.id)>=0);
     c.el.classList.toggle('pinned', !!g.pinned);
-    c.el.querySelector('.you').classList.toggle('hidden', g.id!==S.myGroup);
+    c.el.querySelector('.you').classList.toggle('hidden', S.isAdmin || g.id!==S.myGroup);
     var tm=c.el.querySelector('.who small'); if (tm) tm.textContent=ago(g.createdAt);
     c.el.querySelector('.p-foot').replaceWith(footer(g));
   });
@@ -719,7 +723,7 @@ function postMenu(anchor,g){
   var r=anchor.getBoundingClientRect();
   var m=h('div',{class:'menu',id:'menu',style:'top:'+(r.bottom+window.scrollY+4)+'px;left:'+Math.max(8,r.right+window.scrollX-180)+'px'},
     isEx(g) ? (S.isAdmin ? h('button',{onclick:function(){ closeMenu(); openExampleComposer(g); }},ico('edit'),'Edit example') : null)
-      : (S.isAdmin||(g.mine&&!deadlinePassed())) ? h('button',{onclick:function(){ closeMenu(); openComposer(g.mine?null:g); }},ico('edit'),g.mine?'Edit post':'Edit post / members') : null,
+      : (S.isAdmin||(g.mine&&!deadlinePassed())) ? h('button',{onclick:function(){ closeMenu(); openComposer(g.mine&&!S.isAdmin?null:g); }},ico('edit'),g.mine&&!S.isAdmin?'Edit post':'Edit post / members') : null,
     S.isAdmin ? h('button',{onclick:function(){ closeMenu(); act('setPinned',g.id,!g.pinned).then(function(){ toast(g.pinned?'Unpinned':'Pinned to top'); }).catch(function(){}); }},ico('pin'),g.pinned?'Unpin':'Pin to top') : null,
     h('button',{class:'danger',onclick:function(){ closeMenu(); confirmBox('Delete "'+str(isEx(g)?g.title:g.name,60)+'"?',isEx(g)?'This example card and its comments will be removed.':'Its votes and comments will be removed too.',function(){ act('deletePost',g.id).then(function(){ toast('Deleted'); }).catch(function(){}); }); }},ico('trash'),'Delete post'));
   document.body.append(m);
@@ -763,8 +767,9 @@ function openShare(){ openLinkModal(S.board.name, boardLink(S.board.id, S.url));
 function openComposer(editGroup){
   if (!myName()){ needName(function(){ openComposer(editGroup); }); return; }
   if (S.lockedElsewhere){ toast('You are taking part in "'+S.lockedElsewhere+'"'); return; }
-  var mine = editGroup || (S.postedGroup?groupById(S.postedGroup):null);
-  var editingOther = !!(editGroup && !editGroup.mine);
+  // admins post on behalf of many groups, so "+" always means a new card for them
+  var mine = editGroup || (!S.isAdmin && S.postedGroup ? groupById(S.postedGroup) : null);
+  var editingOther = !!(editGroup && (!editGroup.mine || S.isAdmin));
   if (!S.isAdmin && deadlinePassed()){ toast('Time is up — posting is closed'); return; }
   if (!mine && !S.settings.posting && !S.isAdmin){ toast('New posts are closed'); return; }
   var gpo=!mine&&!S.isAdmin&&groupPostedByOther(); if (gpo){ toast(gpo.name+' already has a card (posted by '+gpo.author+')'); return; }
@@ -805,7 +810,7 @@ function openComposer(editGroup){
     }},
     mHead(editingOther?'Edit '+str(mine.name,40):mine?'Edit post':'New post'),
     h('div',{class:'m-body'},
-      !mine ? h('div',{class:'note'}, 'One person per group posts. Your teammates just choose the same group at the top of the board before they vote.') : null,
+      !mine ? h('div',{class:'note'}, S.isAdmin ? 'Posting on behalf of a group. This card counts in voting — students in this group choose it at the top of the board and can\'t vote for it.' : 'One person per group posts. Your teammates just choose the same group at the top of the board before they vote.') : null,
       h('div',{class:'field'},h('label',null,'Group'),grp),
       h('div',{class:'field'},f.title),
       h('div',{class:'field'},h('label',null,'Video link ',h('span',{class:'req','aria-hidden':'true'},'*')),f.url,prev),
@@ -958,7 +963,7 @@ function renderBoard(){
   renderHeader(); renderMyBar(); renderPosts();
   var canPost=canTakePart() && !!(S.isAdmin || (!deadlinePassed() && (S.postedGroup || (S.settings.posting && !groupPostedByOther()))));
   var fab=$('fab'); fab.classList.toggle('hidden',!canPost);
-  fill(fab, ico('plus'), h('span',{class:'lbl'}, S.isAdmin ? 'New example card' : S.postedGroup ? 'Edit your post' : 'New post'));
+  fill(fab, ico('plus'), h('span',{class:'lbl'}, S.isAdmin ? 'Add card' : S.postedGroup ? 'Edit your post' : 'New post'));
   refreshPost();
   if ($('drawer').classList.contains('open') && !$('drawer').contains(document.activeElement)) renderDrawer();
 }
@@ -1052,7 +1057,12 @@ function start(boardId){
   else { listen(null); call('getBoards').then(function(r){ HOME=r; renderHome(); }).catch(fatal); }
 }
 function boardFromUrl(){ try { return new URLSearchParams(location.search).get('board'); } catch(e){ return null; } }
-$('fab').onclick=function(){ if (S && S.isAdmin) openExampleComposer(); else openComposer(); };
+$('fab').onclick=function(){ if (S && S.isAdmin) openAdminAddChooser(); else openComposer(); };
+function openAdminAddChooser(){
+  openModal([mHead('Add a card'), h('div',{class:'m-body'},
+    h('button',{class:'btn primary',style:'width:100%;margin-bottom:10px',onclick:function(){ closeModal(); openComposer(); }}, ico('film'), 'Post a group’s video (counts in voting)'),
+    h('button',{class:'btn',style:'width:100%',onclick:function(){ closeModal(); openExampleComposer(); }}, ico('bulb'), 'Example card (not part of voting)'))]);
+}
 document.addEventListener('keydown',function(e){ if (e.key==='Escape'){ closeMenu(); if ($('modalRoot').children.length) closeModal(); else closeDrawer(); } });
 document.addEventListener('visibilitychange',function(){ if (!document.hidden) poll(); });
 setInterval(poll, POLL_MS);
