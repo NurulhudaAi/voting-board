@@ -2308,6 +2308,34 @@
       border-color: #1557b0 !important;
     }
 
+    .pv-drive-notice {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: #e8f0fe;
+      color: #1967d2;
+      border-radius: 10px;
+      padding: 9px 13px;
+      font-size: 13px;
+      line-height: 1.4;
+      margin-bottom: 14px;
+      border: 1px solid rgba(26, 115, 232, 0.25);
+    }
+
+    .pv-drive-notice svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      color: #1a73e8;
+    }
+
+    .pv-drive-notice a {
+      color: #1a73e8;
+      font-weight: 650;
+      text-decoration: underline;
+      white-space: nowrap;
+    }
+
     /* ---------- responsive ---------- */
     @media (hover:none) {
 
@@ -3076,7 +3104,10 @@
         };
         var did = (m = u.pathname.match(/\/d\/([\w-]{10,})/)) ? m[1] : u.searchParams.get('id');
         var rk = u.searchParams.get('resourcekey');
-        if (did) return { kind: 'drive', label: 'Google Drive', href: raw, embed: 'https://drive.google.com/file/d/' + did + '/preview' + (rk ? '?resourcekey=' + encodeURIComponent(rk) : ''), thumb: ['https://drive.google.com/thumbnail?id=' + did + '&sz=w800', 'https://lh3.googleusercontent.com/d/' + did + '=w800'] };
+        if (did) {
+          var viewUrl = 'https://drive.google.com/file/d/' + did + '/view' + (rk ? '?resourcekey=' + encodeURIComponent(rk) : '');
+          return { kind: 'drive', label: 'Google Drive', href: viewUrl, embed: 'https://drive.google.com/file/d/' + did + '/preview' + (rk ? '?resourcekey=' + encodeURIComponent(rk) : ''), thumb: ['https://drive.google.com/thumbnail?id=' + did + '&sz=w800', 'https://lh3.googleusercontent.com/d/' + did + '=w800'] };
+        }
       }
       if (host === 'vimeo.com' && (m = u.pathname.match(/^\/(\d+)/))) return { kind: 'vimeo', label: 'Vimeo', href: raw, embed: 'https://player.vimeo.com/video/' + m[1] + '?autoplay=1' };
       if (/tiktok\.com$/.test(host) && (m = u.pathname.match(/\/video\/(\d+)/))) return { kind: 'tiktok', label: 'TikTok', href: raw, tall: true, embed: 'https://www.tiktok.com/embed/v2/' + m[1] };
@@ -3558,7 +3589,13 @@
       var picked = S.picks.indexOf(g.id) >= 0, mine = g.id === S.myGroup;
       var canVote = canTakePart() && votingOpen() && !mine && (picked || S.picks.length < MAX_VOTES);
       var cs = commentsFor(pid);
+      var v = g.url && videoInfo(g.url);
       fill($('pdInfo'),
+        v && v.kind === 'drive' ? h('div', { class: 'pv-drive-notice' },
+          ico('info'),
+          h('span', null, 'มือถือไม่สามารถเลื่อนแถบเวลาในตัวเล่นนี้ได้: '),
+          h('a', { href: v.href, target: '_blank', rel: 'noopener noreferrer' }, 'แตะเปิดใน Google Drive เพื่อเลื่อน/ขยายเต็มจอ ↗')
+        ) : null,
         h('div', { class: 'pd-head-block' },
           h('h2', { class: 'pd-title', text: str(g.title, 120) }),
           h('div', { class: 'pd-meta-row' },
