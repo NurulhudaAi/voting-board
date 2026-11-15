@@ -470,7 +470,7 @@ function canTakePart(){ return S && !S.lockedElsewhere; }
 function myName(){ var m=(S||HOME||{}).me; return m && m.named ? m.display : ''; }
 function needName(then){ if (myName()) { then(); return; } openNameModal(then, true); }
 function openNameModal(then, first){
-  var inp=h('input',{type:'text',class:'big',maxlength:40,placeholder:'Your name, e.g. Adam',value:myName()});
+  var inp=h('input',{type:'text',class:'big',maxlength:40,placeholder:'Your name, e.g. Huda (Group 3)',value:myName()});
   var go=h('button',{class:'btn primary',type:'submit'},first?'Continue':'Save');
   openModal(h('form',{onsubmit:function(e){ e.preventDefault(); var v=inp.value.trim().replace(/\s+/g,' ');
       if (v.length<2){ toast('Please enter at least 2 characters'); inp.focus(); return; }
@@ -574,7 +574,10 @@ function renderMyBar(){
   if (S.postedGroup){ el.append(h('div',{class:'bar'},ico('users'),'Your group',h('b',{text:str(S.myGroupName||'',80)}),h('span',{class:'hint'},'· you posted for this group'))); return; }
   var RG=(S.roster&&S.roster.groups)||{};
   if (S.myGroupName){ var pj=RG[S.myGroupName]&&RG[S.myGroupName].project;
-    el.append(h('div',{class:'bar'},ico('lock'),'Your group',h('b',{text:str(S.myGroupName,80)+(pj?' · '+str(pj,50):'')}),h('span',{class:'hint'},'· chose wrong? ask the instructor or TA'))); return; }
+    var gp=groupPostedByOther();
+    el.append(h('div',{class:'bar'},ico('lock'),'Your group',h('b',{text:str(S.myGroupName,80)+(pj?' · '+str(pj,50):'')}),
+      h('span',{class:'hint'}, gp ? '· card posted by '+str(gp.author,30)+' — vote for other groups' : '· no card yet — tap + to post it')),
+      h('div',{class:'hint',style:'margin:8px 0 0 4px'},'Chose the wrong group? Ask the instructor or TA to reset it.')); return; }
   if (!S.groupNames || !S.groupNames.length) return;
   var sel=h('select',{disabled:busy,onchange:function(e){ var v=e.target.value; e.target.value=''; if (!v) return;
       needName(function(){ confirmGroup(v); }); }},
@@ -582,6 +585,7 @@ function renderMyBar(){
     S.groupNames.map(function(n){ return h('option',{value:n},n+(RG[n]&&RG[n].project?' · '+str(RG[n].project,50):'')); }));
   el.append(h('div',{class:'bar'},ico('users'),'Your group',sel,h('span',{class:'hint'},'Choose it before you vote — you can only choose once')));
 }
+function groupPostedByOther(){ if (!S || S.postedGroup || !S.myGroup) return null; var g=groupById(S.myGroup); return g && !isEx(g) ? g : null; }
 function confirmGroup(n){
   var RG=(S.roster&&S.roster.groups)||{}, pj=RG[n]&&RG[n].project;
   openModal([mHead('Join '+n+'?'),
@@ -700,6 +704,7 @@ function openComposer(editGroup){
   var mine = editGroup || (S.postedGroup?groupById(S.postedGroup):null);
   var editingOther = !!(editGroup && !editGroup.mine);
   if (!mine && !S.settings.posting && !S.isAdmin){ toast('New posts are closed'); return; }
+  var gpo=!mine&&!S.isAdmin&&groupPostedByOther(); if (gpo){ toast(gpo.name+' already has a card (posted by '+gpo.author+')'); return; }
   var f={ title:h('input',{type:'text',class:'big',maxlength:120,placeholder:'Title'}),
     url:h('input',{type:'url',required:true,'aria-required':'true',placeholder:'YouTube, Google Drive, TikTok or Vimeo link'}),
     desc:h('textarea',{maxlength:1000,placeholder:'A short description (optional)'}) };
@@ -888,7 +893,7 @@ function renderDrawer(){
 function renderBoard(){
   if (!S || !BOARD || !$('posts')) return;
   renderHeader(); renderMyBar(); renderPosts();
-  var canPost=canTakePart() && !!(S.postedGroup || S.settings.posting || S.isAdmin);
+  var canPost=canTakePart() && !!(S.isAdmin || S.postedGroup || (S.settings.posting && !groupPostedByOther()));
   var fab=$('fab'); fab.classList.toggle('hidden',!canPost);
   fill(fab, ico('plus'), h('span',{class:'lbl'}, S.isAdmin ? 'New example card' : S.postedGroup ? 'Edit your post' : 'New post'));
   refreshPost();
