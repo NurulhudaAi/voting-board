@@ -2850,6 +2850,20 @@
         grid-template-columns: 26px 1fr 36px;
         gap: 8px
       }
+
+      /* กล่องคอมเมนต์เป็น <form> ด้วย อย่าให้โดนกฎ .modal form */
+      .post-view form.cbox {
+        flex-direction: row;
+        flex: none;
+        overflow: visible;
+        min-height: 0;
+      }
+
+      .post-view form.cbox input {
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 42px;
+      }
     }
 
     @keyframes sheetin {
