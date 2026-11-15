@@ -2864,6 +2864,16 @@
         min-width: 0;
         height: 42px;
       }
+
+      /* Drive / Slides / Canva บนมือถือ: กรอบสูงขึ้นให้แถบควบคุมของ Google ไม่โดนตัด */
+      .pv-player-wrap .media.k-drive,
+      .pv-player-wrap .media.k-slides,
+      .pv-player-wrap .media.k-canva {
+        aspect-ratio: 4 / 5;
+        width: 100%;
+        max-height: 62vh;
+        max-height: 62dvh;
+      }
     }
 
     @keyframes sheetin {
@@ -3150,7 +3160,7 @@
     function mediaBox(g, opts) {
       opts = opts || {};
       var v = videoInfo(g.url); if (!v) return null;
-      var box = h('div', { class: 'media' + (v.tall ? ' tall' : '') + (opts.round ? ' round' : ''), onclick: function (e) { e.stopPropagation(); } });
+      var box = h('div', { class: 'media k-' + v.kind + (v.tall ? ' tall' : '') + (opts.round ? ' round' : ''), onclick: function (e) { e.stopPropagation(); } });
       var canEmbed = !!(v.embed || v.file);
       var heavy = v.kind === 'drive' || v.kind === 'slides' || v.kind === 'canva';   // small inline players work poorly → open the big viewer
       function start() {
