@@ -3646,7 +3646,8 @@
                 : h('button', { class: 'vbtn' + (picked ? ' on' : ''), 'data-vote': g.id, disabled: !canVote, onclick: function () { toggleVote(g.id); } }, ico('star'), picked ? 'Voted — tap to remove' : 'Vote for this group'),
           resultsVisible() && g.votes != null ? h('span', { class: 'vcount' }, ico('star'), g.votes + (g.votes === 1 ? ' vote' : ' votes')) : null,
           !votingOpen() ? h('span', { class: 'chip' }, ico('lock'), 'Voting closed') : null,
-          h('button', { class: 'ext-btn pv-fs-action', type: 'button', onclick: function () { toggleFs(); } }, ico('maximize'), 'Fullscreen')
+          h('button', { class: 'ext-btn pv-fs-action', type: 'button', onclick: function () { toggleFs(); } }, ico('maximize'), 'Fullscreen'),
+          (function () { var v = g.url && videoInfo(g.url); return v && (v.kind === 'drive' || v.kind === 'slides' || v.kind === 'canva') ? h('a', { class: 'ext-btn', href: v.href, target: '_blank', rel: 'noopener noreferrer' }, ico('ext'), 'Open in ' + v.label.replace('Google ', '')) : null; })()
         ),
         S.settings.comments ? h('div', { class: 'pd-comments-hd' }, h('span', null, 'Comments · ' + cs.length)) : null,
         S.settings.comments ? (cs.length ? h('div', { class: 'cmts' }, cs.map(function (c) {
