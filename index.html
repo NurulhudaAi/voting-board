@@ -368,7 +368,7 @@ var RPC={ getState:['get_state',['p_board']], getBoards:['get_boards',[]], creat
   deleteBoard:['delete_board',['p_board']], toggleVote:['toggle_vote',['p_board','p_gid']], setMyGroup:['set_my_group',['p_board','p_group']],
   savePost:['save_post',['p_board','p_data']], deletePost:['delete_post',['p_board','p_id']], addComment:['add_comment',['p_board','p_pid','p_text']],
   deleteComment:['delete_comment',['p_board','p_id']], saveSettings:['save_settings',['p_board','p_patch']], resetVote:['reset_vote',['p_board','p_uid']],
-  importRoster:['import_roster',['p_board','p_rows']], clearRoster:['clear_roster',['p_board']], saveExample:['save_example',['p_board','p_data']],
+  importRoster:['import_roster',['p_board','p_rows']], clearRoster:['clear_roster',['p_board']], addRosterGroup:['add_roster_group',['p_board','p_group','p_project','p_names']], saveExample:['save_example',['p_board','p_data']],
   setPinned:['set_pinned',['p_board','p_id','p_pinned']], getAdmins:['get_admins',[]], removeAdmin:['remove_admin',['p_uid']],
   setName:['set_name',['p_name']], adminLogin:['admin_login',['p_code']], adminLogout:['admin_logout',[]], setPasscode:['set_passcode',['p_code']] };
 var sb=null, CFG=window.APP_CONFIG||{};
@@ -796,6 +796,25 @@ function openRosterImport(){
     h('div',{class:'field'},file), ta),
     h('div',{class:'m-foot'},h('button',{class:'btn',onclick:closeModal},'Cancel'),go)], true);
 }
+function openAddGroup(){
+  var next=((S.groupNames&&S.groupNames.length)||0)+1;
+  var num=h('input',{type:'text',inputmode:'numeric',maxlength:3}); num.value=next;
+  var proj=h('input',{type:'text',maxlength:120,placeholder:'Project title'});
+  var names=h('input',{type:'text',maxlength:600,placeholder:'e.g. Ann, Bob, Cat'});
+  var go=h('button',{class:'btn primary',type:'submit'},'Add group');
+  openModal([h('form',{onsubmit:function(e){ e.preventDefault();
+      var n=parseInt(num.value,10); if (!(n>=1&&n<=100)){ toast('Group number must be 1 – 100'); num.focus(); return; }
+      if (!proj.value.trim()){ toast('Please enter the project title'); proj.focus(); return; }
+      go.disabled=true;
+      act('addRosterGroup',n,proj.value.trim(),names.value.trim()).then(function(){ closeModal(); toast('Group '+n+' added'); renderDrawer(); }).catch(function(){ go.disabled=false; }); }},
+    mHead('Add a group'), h('div',{class:'m-body'},
+      h('div',{class:'note'},'Adds one group to the current list. Existing groups, posts and votes stay exactly as they are.'),
+      h('div',{class:'field'},h('label',null,'Group number'),num),
+      h('div',{class:'field'},h('label',null,'Project title ',h('span',{class:'req','aria-hidden':'true'},'*')),proj),
+      h('div',{class:'field',style:'margin:0'},h('label',null,'Members ',h('span',null,'(optional, separated by commas — visible to admins only)')),names)),
+    h('div',{class:'m-foot'},h('button',{class:'btn',type:'button',onclick:closeModal},'Cancel'),go))]);
+  setTimeout(function(){ proj.focus(); },30);
+}
 function openShare(){ openLinkModal(S.board.name, boardLink(S.board.id, S.url)); }
 
 function openComposer(editGroup){
@@ -958,7 +977,11 @@ function renderDrawer(){
   var d=$('drawer'), st=S.settings;
   var nm=h('input',{type:'text',maxlength:80,onchange:function(e){ var v=e.target.value.trim(); if (v){ S.board.name=v; saveSettings({name:v}); } }}); nm.value=str(S.board.name,80);
   var ds=h('textarea',{maxlength:300,style:'min-height:60px',onchange:function(e){ saveSettings({desc:e.target.value.trim()}); }}); ds.value=str(st.desc,300);
-  var gc=h('input',{type:'text',inputmode:'numeric',maxlength:3,onchange:function(e){ var n=parseInt(e.target.value,10); if (n>=1&&n<=100) saveSettings({groupCount:n}); else { toast('Enter a number from 1 to 100'); e.target.value=st.groupCount||10; } }}); gc.value=st.groupCount||10;
+  var rmax=Object.keys((S.roster&&S.roster.groups)||{}).reduce(function(m,k){ return Math.max(m, parseInt(k.replace(/\D/g,''),10)||0); },0);
+  var gcNow=(S.groupNames&&S.groupNames.length)||st.groupCount||10;
+  var gc=h('input',{type:'text',inputmode:'numeric',maxlength:3,onchange:function(e){ var n=parseInt(e.target.value,10);
+      if (n>=Math.max(1,rmax)&&n<=100){ saveSettings({groupCount:n}); toast('Groups: 1 – '+n); }
+      else { toast(rmax?'Enter a number from '+rmax+' to 100 (your list has '+rmax+' groups)':'Enter a number from 1 to 100'); e.target.value=gcNow; } }}); gc.value=gcNow;
   var cls=h('input',{type:'text',inputmode:'numeric',maxlength:4,placeholder:'e.g. 42',onchange:function(e){ saveSettings({classSize:parseInt(e.target.value,10)||null}); }}); cls.value=st.classSize||'';
   function toLocal(ms){ var x=new Date(ms); x.setMinutes(x.getMinutes()-x.getTimezoneOffset()); return x.toISOString().slice(0,16); }
   var dt=h('input',{type:'datetime-local',onchange:function(e){ saveSettings({closeAt:e.target.value?new Date(e.target.value).getTime():null}); }}); if (st.closeAt) dt.value=toLocal(st.closeAt);
@@ -976,11 +999,13 @@ function renderDrawer(){
       h('div',{class:'sec'},'Group list'),
       S.roster.count ? h('p',{class:'hint',style:'margin:0 0 8px'},Object.keys(S.roster.groups).length+' groups · '+S.roster.count+' students. Students see group numbers and project titles; member names are visible to admins only.')
         : h('p',{class:'hint',style:'margin:0 0 8px'},'Optional. Import your group list so the dropdown shows each group’s project title.'),
-      h('div',{style:'display:flex;gap:6px'}, h('button',{class:'btn sm',onclick:openRosterImport},S.roster.count?'Replace list':'Import list'),
+      h('div',{style:'display:flex;gap:6px;flex-wrap:wrap'}, h('button',{class:'btn sm',onclick:openRosterImport},S.roster.count?'Replace list':'Import list'),
+        S.roster.count ? h('button',{class:'btn sm primary',onclick:openAddGroup},ico('plus'),'Add a group') : null,
         S.roster.count ? h('button',{class:'btn sm danger',onclick:function(){ confirmBox('Clear the group list?','Project titles will no longer show in the group dropdown.',function(){ act('clearRoster').then(function(){ toast('Group list cleared'); renderDrawer(); }).catch(function(){}); }); }},'Clear') : null),
       a.missing && a.missing.length ? h('p',{class:'hint',style:'margin:10px 0 0'},'Not posted yet: '+a.missing.join(', ')) : null,
       h('div',{class:'sec'},'Groups'),
-      S.roster.count ? null : h('div',{class:'field'},h('label',null,'Number of groups ',h('span',null,'(Group 1 … Group N in the dropdown)')),gc),
+      h('div',{class:'field'},h('label',null,'Number of groups ',h('span',null,'(Group 1 … Group N in the dropdown)')),gc,
+        rmax ? h('div',{class:'hint',style:'margin-top:4px'},'Your list has '+rmax+' groups. To add a group that isn’t in the list, raise this number (e.g. '+(rmax+1)+' adds Group '+(rmax+1)+'). Extra groups have no project title in the dropdown; type the title on the card.') : null),
       h('div',{class:'sec'},'Posts'),
       sw('Accept new posts','Existing posts can still be edited','posting'),
       sw('Comments','Let everyone comment on posts','comments'),
