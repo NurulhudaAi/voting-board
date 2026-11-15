@@ -13,7 +13,6 @@ supabase/.temp/
 
 supabase.local.sql
 *.local.sql
-*config.js
 
 *.bak
 *.old
