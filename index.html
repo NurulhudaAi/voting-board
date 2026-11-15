@@ -572,13 +572,23 @@ function renderMyBar(){
   if (S.isAdmin) return; // teachers don't vote
   if (S.lockedElsewhere){ el.append(h('div',{class:'notice'},ico('lock'),'You are taking part in "'+S.lockedElsewhere+'", so you can watch this board but not post or vote here.')); return; }
   if (S.postedGroup){ el.append(h('div',{class:'bar'},ico('users'),'Your group',h('b',{text:str(S.myGroupName||'',80)}),h('span',{class:'hint'},'· you posted for this group'))); return; }
-  if (!S.groupNames || !S.groupNames.length) return;
   var RG=(S.roster&&S.roster.groups)||{};
-  var sel=h('select',{disabled:busy||S.picks.length>0,onchange:function(e){ var v=e.target.value;
-      needName(function(){ act('setMyGroup', v).catch(function(){ renderBoard(); }); }); if (!myName()) e.target.value=S.myGroupName||''; }},
+  if (S.myGroupName){ var pj=RG[S.myGroupName]&&RG[S.myGroupName].project;
+    el.append(h('div',{class:'bar'},ico('lock'),'Your group',h('b',{text:str(S.myGroupName,80)+(pj?' · '+str(pj,50):'')}),h('span',{class:'hint'},'· chose wrong? ask the instructor or TA'))); return; }
+  if (!S.groupNames || !S.groupNames.length) return;
+  var sel=h('select',{disabled:busy,onchange:function(e){ var v=e.target.value; e.target.value=''; if (!v) return;
+      needName(function(){ confirmGroup(v); }); }},
     h('option',{value:''},'Select your group'),
-    S.groupNames.map(function(n){ var o=h('option',{value:n},n+(RG[n]&&RG[n].project?' · '+str(RG[n].project,50):'')); if (n===S.myGroupName) o.selected=true; return o; }));
-  el.append(h('div',{class:'bar'},ico('users'),'Your group',sel,h('span',{class:'hint'}, S.myGroupName?(S.picks.length?'Remove your votes to change group':'You can\'t vote for your own group'):'Choose it before you vote')));
+    S.groupNames.map(function(n){ return h('option',{value:n},n+(RG[n]&&RG[n].project?' · '+str(RG[n].project,50):'')); }));
+  el.append(h('div',{class:'bar'},ico('users'),'Your group',sel,h('span',{class:'hint'},'Choose it before you vote — you can only choose once')));
+}
+function confirmGroup(n){
+  var RG=(S.roster&&S.roster.groups)||{}, pj=RG[n]&&RG[n].project;
+  openModal([mHead('Join '+n+'?'),
+    h('div',{class:'m-body'}, pj?h('p',{style:'margin:0 0 8px;font-weight:600',text:pj}):null,
+      h('p',{class:'hint',style:'margin:0'},'You won\'t be able to change your group later, and you can\'t vote for it. If you pick the wrong one, ask the instructor or TA to reset it.')),
+    h('div',{class:'m-foot'},h('button',{class:'btn',onclick:closeModal},'Cancel'),
+      h('button',{class:'btn primary',onclick:function(){ closeModal(); act('setMyGroup', n).then(function(){ toast('You\'re in '+n); }).catch(function(){}); }},'Yes, that\'s my group'))]);
 }
 
 /* posts — keyed so a playing video is never reloaded */
@@ -701,7 +711,7 @@ function openComposer(editGroup){
   var preset = mine ? mine.name : (S.myGroupName||'');
   var grp=h('select',{style:'width:100%;font:inherit;padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:#fff'},
     h('option',{value:''},'Select your group'),
-    names.map(function(n){ var o=h('option',{value:n,disabled:!!taken[n]}, n+(RG[n]&&RG[n].project?' · '+RG[n].project:'')+(taken[n]?' — already posted':'')); if (n===preset && !taken[n]) o.selected=true; return o; }));
+    names.map(function(n){ var lockedTo=!mine&&!S.isAdmin&&S.myGroupName&&n!==S.myGroupName; var o=h('option',{value:n,disabled:!!taken[n]||lockedTo}, n+(RG[n]&&RG[n].project?' · '+RG[n].project:'')+(taken[n]?' — already posted':'')); if (n===preset && !taken[n]) o.selected=true; return o; }));
   if (!mine && grp.value && RG[grp.value] && RG[grp.value].project) f.title.value=RG[grp.value].project;
   grp.addEventListener('change',function(){ if (!f.title.value && RG[grp.value] && RG[grp.value].project) f.title.value=RG[grp.value].project; });
   var mem=h('input',{type:'text',maxlength:400,placeholder:'e.g. Ann, Bob, Cat'}); if (mine) mem.value=str(mine.members||'',400);
