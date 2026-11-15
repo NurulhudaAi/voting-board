@@ -2314,18 +2314,6 @@
       padding: 0
     }
 
-    
-    .ext-btn.pv-drive-btn {
-      background: #1a73e8 !important;
-      color: #fff !important;
-      border-color: #1a73e8 !important;
-      font-weight: 600 !important;
-    }
-    .ext-btn.pv-drive-btn:hover {
-      background: #1557b0 !important;
-      border-color: #1557b0 !important;
-    }
-
     /* ---------- responsive ---------- */
     @media (hover:none) {
 
@@ -3612,8 +3600,7 @@
                 : h('button', { class: 'vbtn' + (picked ? ' on' : ''), 'data-vote': g.id, disabled: !canVote, onclick: function () { toggleVote(g.id); } }, ico('star'), picked ? 'Voted — tap to remove' : 'Vote for this group'),
           resultsVisible() && g.votes != null ? h('span', { class: 'vcount' }, ico('star'), g.votes + (g.votes === 1 ? ' vote' : ' votes')) : null,
           !votingOpen() ? h('span', { class: 'chip' }, ico('lock'), 'Voting closed') : null,
-          h('button', { class: 'ext-btn pv-fs-action', type: 'button', onclick: function () { toggleFs(); } }, ico('maximize'), 'Fullscreen'),
-          g.url && videoInfo(g.url) ? h('a', { href: videoInfo(g.url).href, target: '_blank', rel: 'noopener noreferrer', class: 'ext-btn' + (videoInfo(g.url).kind === 'drive' ? ' pv-drive-btn' : '') }, ico('ext'), (videoInfo(g.url).kind === 'drive' ? 'เปิดดูจอใหญ่ใน Google Drive ↗' : 'Open in ' + videoInfo(g.url).label)) : null
+          h('button', { class: 'ext-btn pv-fs-action', type: 'button', onclick: function () { toggleFs(); } }, ico('maximize'), 'Fullscreen')
         ),
         S.settings.comments ? h('div', { class: 'pd-comments-hd' }, h('span', null, 'Comments · ' + cs.length)) : null,
         S.settings.comments ? (cs.length ? h('div', { class: 'cmts' }, cs.map(function (c) {
