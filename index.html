@@ -286,9 +286,75 @@ th{color:var(--muted);font-weight:500}
 @keyframes shimmer{to{background-position:-200% 0}}
 @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
-/* ---------- video post modal (responsive) ---------- */
-.post-view .m-body{padding:16px 20px 0}
-.post-view .media.round{margin:0 0 14px;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+/* ---------- video post modal (YouTube-style fullscreen) ---------- */
+.ov-post-view{
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  background: rgba(12,12,16,.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.modal.post-view{
+  max-width: 880px;
+  width: 100%;
+  max-height: 94vh;
+  max-height: 94dvh;
+  height: 94vh;
+  height: 94dvh;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 25px 70px rgba(0,0,0,.35);
+  animation: modalin .3s var(--ease) both;
+}
+.pv-topnav{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--soft);
+  background: #fff;
+  flex: none;
+  z-index: 10;
+}
+.pv-topnav .pv-toptitle{
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14.5px;
+}
+.pv-topnav .pv-toptitle b{
+  font-weight: 650;
+  color: var(--ink);
+}
+.pv-player-wrap{
+  flex: none;
+  width: 100%;
+  background: #000;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16/9;
+}
+.pv-player-wrap .media{
+  margin: 0;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: none;
+}
+.post-view .pd-body{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 18px 22px 0;
+}
 .pd-head-block{margin-bottom:12px}
 .pd-title{margin:0 0 8px;font-size:20px;font-weight:650;letter-spacing:-.015em;line-height:1.3;word-break:break-word}
 .pd-meta-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
@@ -306,10 +372,9 @@ th{color:var(--muted);font-weight:500}
 .pd-acts .ext-btn svg{width:15px;height:15px}
 .pd-acts .vcount{height:42px;padding:0 12px;background:var(--soft);border-radius:12px;font-size:13px;display:inline-flex;align-items:center;gap:6px}
 .pd-comments-hd{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:16px 0 10px;display:flex;align-items:center;justify-content:space-between}
-.post-view .cbox{position:sticky;bottom:0;margin:14px -20px 0 -20px;padding:10px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);box-shadow:0 -4px 20px rgba(0,0,0,.06);z-index:15;display:flex;gap:8px;align-items:center}
+.post-view .cbox{position:sticky;bottom:0;margin:14px -22px 0 -22px;padding:10px 18px calc(12px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);box-shadow:0 -4px 20px rgba(0,0,0,.06);z-index:15;display:flex;gap:8px;align-items:center}
 .post-view .cbox input{height:42px;font-size:15px;padding:0 16px;border-radius:999px;background:#fbfbfa;border:1px solid var(--line)}
 .post-view .cbox .btn{width:42px;height:42px;border-radius:50%;flex:none;padding:0}
-
 /* ---------- responsive ---------- */
 @media (hover:none){.post:hover,.brow:hover{transform:none;box-shadow:var(--sh1)}.media:hover .cover{transform:none}.fab:hover svg{transform:none}.fab .lbl{display:none}}
 @media (pointer:coarse){
@@ -371,14 +436,55 @@ th{color:var(--muted);font-weight:500}
   .cbox{position:sticky;bottom:0;background:#fff;padding:8px 0;margin-top:10px;border-top:1px solid var(--soft);z-index:5}
   .cbox input{font-size:16px}
 
-  .post-view .m-head{padding:12px 14px 10px 16px}
-  .post-view .m-body{padding:10px 14px 0}
-  .post-view .media.round{margin:-10px -14px 12px -14px;border-radius:0;box-shadow:none}
-  .pd-title{font-size:17px;margin-bottom:6px}
-  .pd-acts{gap:8px;padding:10px 0}
-  .pd-acts .vbtn{flex:1 1 auto;height:40px;min-width:140px;font-size:13px}
-  .pd-acts .ext-btn{height:40px;padding:0 11px;font-size:12.5px}
-  .post-view .cbox{margin:12px -14px 0 -14px;padding:8px 12px calc(10px + env(safe-area-inset-bottom))}
+  /* Fullscreen YouTube style on mobile */
+  .ov-post-view{
+    padding: 0!important;
+    align-items: stretch!important;
+    background: #000!important;
+    z-index: 100!important;
+  }
+  .modal.post-view{
+    position: fixed!important;
+    inset: 0!important;
+    width: 100vw!important;
+    height: 100vh!important;
+    height: 100dvh!important;
+    max-width: 100vw!important;
+    max-height: 100vh!important;
+    max-height: 100dvh!important;
+    border-radius: 0!important;
+    margin: 0!important;
+    animation: sheetin .22s var(--ease) both!important;
+  }
+  .pv-topnav{
+    padding: 8px 8px;
+    padding-top: max(8px, env(safe-area-inset-top));
+    background: #fff;
+    border-bottom: 1px solid rgba(0,0,0,.08);
+  }
+  .pv-topnav .ibtn{width:36px;height:36px}
+  .pv-player-wrap{
+    width: 100vw;
+    aspect-ratio: 16/9;
+    background: #000;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  }
+  .pv-player-wrap .media{
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 16/9;
+  }
+  .post-view .pd-body{
+    padding: 14px 16px 0;
+  }
+  .pd-title{font-size:17px;margin-bottom:6px;line-height:1.35}
+  .pd-acts{gap:8px;padding:10px 0;margin:10px 0 14px}
+  .pd-acts .vbtn{flex:1 1 auto;height:42px;min-width:140px;font-size:13.5px}
+  .pd-acts .ext-btn{height:42px;padding:0 12px;font-size:13px}
+  .post-view .cbox{margin:12px -16px 0 -16px;padding:8px 12px calc(10px + env(safe-area-inset-bottom))}
 
   .home{padding:28px 12px 80px}
   .home h1{font-size:21px}
@@ -591,7 +697,7 @@ function mediaBox(g, opts){
       h('a',{class:'ext',href:v.href,target:'_blank',rel:'noopener noreferrer'},ico('ext'),'Open in '+v.label.replace('Google ',''))); if (opts.onPlay) opts.onPlay(); }
   if (opts.startPlaying && canEmbed){ start(); return box; }
   var cover = h('button',{class:'cover k-'+v.kind,'aria-label':'Play video '+str(g.title,80),onclick:function(e){ e.stopPropagation();
-      if (!canEmbed) window.open(v.href,'_blank','noopener'); else if (heavy && opts.onBig) opts.onBig(); else start(); }},
+      if (!canEmbed) window.open(v.href,'_blank','noopener'); else if (opts.onBig) opts.onBig(); else start(); }},
     h('span',{class:'play'}, canEmbed?svgPlay():ico('ext')),
     !canEmbed ? h('span',{class:'big'}, v.kind==='folder' ? 'Folder link — opens in a new tab' : 'Opens in a new tab') : null,
     h('span',{class:'src'}, canEmbed?ico('film'):ico('link'), v.label));
@@ -824,7 +930,7 @@ function openModal(content,wide,extraClass){
   runModalCleanup();
   var root=$('modalRoot'); root.replaceChildren();
   var cls='modal'+(wide?' wide':'')+(extraClass?' '+extraClass:'');
-  var ov=h('div',{class:'overlay',onclick:function(e){ if (e.target===ov) closeModal(); }}, h('div',{class:cls,role:'dialog','aria-modal':'true'},content));
+  var ov=h('div',{class:'overlay'+(extraClass?' ov-'+extraClass:''),onclick:function(e){ if (e.target===ov) closeModal(); }}, h('div',{class:cls,role:'dialog','aria-modal':'true'},content));
   root.append(ov); document.body.style.overflow='hidden';
 }
 function closeModal(){ runModalCleanup(); $('modalRoot').replaceChildren(); document.body.style.overflow=''; openPostId=null; }
@@ -979,8 +1085,16 @@ function openPost(pid, focusComment){
       pending++; queue=queue.then(function(){ return call('addComment',BOARD,pid,t); }).then(function(st){ pending--; if (!pending) setState(st); })
         .catch(function(err){ pending--; S.comments=S.comments.filter(function(c){ return c!==tmp; }); refreshPost(); input.value=t; toast((err&&err.message)||'Couldn\'t post your comment'); }); }},
       input,h('button',{class:'btn primary',type:'submit','aria-label':'Send'},ico('send'))) : null;
-  var player=mediaBox(g,{startPlaying:!focusComment,round:true});
-  openModal([mHead(str(g.name,80)), h('div',{class:'m-body'}, player, h('div',{id:'pdInfo'}), box)], true, 'post-view');
+  var topNav = h('div',{class:'pv-topnav'},
+    h('button',{class:'ibtn pv-back','aria-label':'Back to board',title:'Back',onclick:closeModal}, ico('back')),
+    h('div',{class:'pv-toptitle'}, h('b',null,str(g.name,60)), h('span',{class:'hint'},' · '+str(g.title,50))),
+    h('button',{class:'ibtn pv-close-x','aria-label':'Close',title:'Close',onclick:closeModal}, ico('x'))
+  );
+  var player = mediaBox(g,{startPlaying:!focusComment,round:true});
+  var playerWrap = h('div',{class:'pv-player-wrap'}, player);
+  var scrollBody = h('div',{class:'m-body pd-body'}, h('div',{id:'pdInfo'}), box);
+
+  openModal([topNav, playerWrap, scrollBody], true, 'post-view');
   refreshPost();
   if (focusComment&&box) setTimeout(function(){ input.focus(); },30);
 }
