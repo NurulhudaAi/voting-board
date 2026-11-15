@@ -144,6 +144,9 @@ main.wrap{padding-top:28px;padding-bottom:130px}
 .media.round{margin:0}
 .media .cover.k-drive,.media .cover.k-slides,.media .cover.k-canva{background-image:radial-gradient(120% 90% at 20% 10%,#3a4256 0,#1d2029 60%)}
 .media .cover .big{position:absolute;left:50%;top:calc(50% + 44px);transform:translateX(-50%);z-index:1;font-size:12px;font-weight:500;opacity:.85;white-space:nowrap}
+.media .cover .ttl{position:absolute;left:16px;right:16px;top:14px;z-index:1;text-align:left;font-size:15px;font-weight:650;line-height:1.3;letter-spacing:-.01em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.media .cover .ttl small{display:block;font-size:11px;font-weight:600;opacity:.65;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.media .cover.has-thumb .ttl{display:none}
 .media .help{position:absolute;left:8px;top:8px;z-index:2;background:rgba(0,0,0,.55);color:#fff;font-size:11.5px;padding:4px 9px;border-radius:999px;backdrop-filter:blur(6px)}
 .av.grp{border-radius:10px;font-size:12.5px}
 .linkcheck{margin-top:8px;padding:10px 12px;border-radius:12px;font-size:12.5px;line-height:1.5;background:rgba(0,0,0,.04);color:var(--ink2)}
@@ -506,7 +509,7 @@ function videoInfo(raw){
     }
   }
   if (host==='docs.google.com' && (m=u.pathname.match(/\/presentation\/d\/([\w-]{10,})/)))
-    return { kind:'slides', label:'Google Slides', href:raw, embed:'https://docs.google.com/presentation/d/'+m[1]+'/embed?start=false&loop=false', thumb:'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w800' };
+    return { kind:'slides', label:'Google Slides', href:raw, embed:'https://docs.google.com/presentation/d/'+m[1]+'/embed?start=false&loop=false', thumb:['https://drive.google.com/thumbnail?id='+m[1]+'&sz=w800','https://lh3.googleusercontent.com/d/'+m[1]+'=w800'] };
   if (/(^|\.)canva\.com$/.test(host) && (m=u.pathname.match(/\/design\/([\w-]+)(?:\/([\w-]+))?/)))
     return { kind:'canva', label:'Canva', href:raw, embed:'https://www.canva.com/design/'+m[1]+(m[2]&&m[2]!=='view'&&m[2]!=='edit'?'/'+m[2]:'')+'/view?embed' };
   if (host==='drive.google.com' || host==='docs.google.com'){
@@ -514,7 +517,7 @@ function videoInfo(raw){
       problem:'This is a folder link. Open the folder, right-click the video file → Share → Copy link, and paste that link instead.' };
     var did = (m=u.pathname.match(/\/d\/([\w-]{10,})/)) ? m[1] : u.searchParams.get('id');
     var rk = u.searchParams.get('resourcekey');
-    if (did) return { kind:'drive', label:'Google Drive', href:raw, embed:'https://drive.google.com/file/d/'+did+'/preview'+(rk?'?resourcekey='+encodeURIComponent(rk):''), thumb:'https://drive.google.com/thumbnail?id='+did+'&sz=w800' };
+    if (did) return { kind:'drive', label:'Google Drive', href:raw, embed:'https://drive.google.com/file/d/'+did+'/preview'+(rk?'?resourcekey='+encodeURIComponent(rk):''), thumb:['https://drive.google.com/thumbnail?id='+did+'&sz=w800','https://lh3.googleusercontent.com/d/'+did+'=w800'] };
   }
   if (host==='vimeo.com' && (m=u.pathname.match(/^\/(\d+)/))) return { kind:'vimeo', label:'Vimeo', href:raw, embed:'https://player.vimeo.com/video/'+m[1]+'?autoplay=1' };
   if (/tiktok\.com$/.test(host) && (m=u.pathname.match(/\/video\/(\d+)/))) return { kind:'tiktok', label:'TikTok', href:raw, tall:true, embed:'https://www.tiktok.com/embed/v2/'+m[1] };
@@ -541,7 +544,13 @@ function mediaBox(g, opts){
     h('span',{class:'play'}, canEmbed?svgPlay():ico('ext')),
     !canEmbed ? h('span',{class:'big'}, v.kind==='folder' ? 'Folder link — opens in a new tab' : 'Opens in a new tab') : null,
     h('span',{class:'src'}, canEmbed?ico('film'):ico('link'), v.label));
-  if (v.thumb){ var img = new Image(); img.onload=function(){ if (img.naturalWidth>130) cover.style.backgroundImage='url("'+v.thumb+'")'; }; img.src=v.thumb; }
+  // cover image: try each thumbnail source in turn; if none loads, show a designed title cover instead of a blank box
+  if (canEmbed && g.title && g.title!=='Preview') cover.append(h('span',{class:'ttl'}, h('small',null,isEx(g)?'':str(g.name||'',30)), str(g.title,90)));
+  var thumbs=[].concat(v.thumb||[]);
+  (function tryThumb(i){ if (i>=thumbs.length) return; var img=new Image(), done=false;
+    var fail=function(){ if (done) return; done=true; tryThumb(i+1); };
+    img.onload=function(){ if (done) return; done=true; if (img.naturalWidth>130){ cover.style.backgroundImage='url("'+thumbs[i]+'")'; cover.classList.add('has-thumb'); } else tryThumb(i+1); };
+    img.onerror=fail; setTimeout(fail,6000); img.referrerPolicy='no-referrer'; img.src=thumbs[i]; })(0);
   box.append(cover);
   return box;
 }
